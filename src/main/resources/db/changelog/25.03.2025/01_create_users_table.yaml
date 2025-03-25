@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 24.03.2025_01
+      author: sashatut2004@yandex.ru
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: login
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: external_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true

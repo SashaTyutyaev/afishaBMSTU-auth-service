@@ -1,0 +1,36 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: auth_service
+  datasource:
+    driver-class-name: ${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/afisha-bmstu}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: auth_service
+    liquibase-schema: auth_service
+
+security:
+  jwt:
+    secret: a7T8mQ2xL5rH9jK0pB3zW1yNxV6c4oFhJkSiZPlGsYb
+
+integration:
+  rest:
+    user-service:
+      url: http://localhost:8080
