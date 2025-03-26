@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "user-service", url = "${integration.rest.user-service.url}")
 public interface UserServiceFeignClient {
 
-    @PostMapping("/api/users/register")
+    @PostMapping("/api/internal/create-user-after-sign-up")
     void registerUser(@RequestBody UserCreationRequestDto requestDto);
 }

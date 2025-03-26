@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: auth-service
+    name: AFI-BMSTU-auth-service
 
   jpa:
     hibernate:
@@ -29,8 +29,11 @@ spring:
 security:
   jwt:
     secret: a7T8mQ2xL5rH9jK0pB3zW1yNxV6c4oFhJkSiZPlGsYb
+  internal:
+    token: YmtnamdvaU9RZmpza2pmVUZqZ2hnMTI4NGpK
 
 integration:
   rest:
     user-service:
       url: http://localhost:8080
+      token: YWhmaWZ1QUtFSVVKRmt3bGtkbHdvS1NV

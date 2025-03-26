@@ -1,6 +1,7 @@
 package afishaBMSTU.auth_service.service;
 
 import afishaBMSTU.auth_service.client.UserServiceFeignClient;
+import afishaBMSTU.auth_service.dto.JwtTokenDataDto;
 import afishaBMSTU.auth_service.dto.LoginRequestDto;
 import afishaBMSTU.auth_service.dto.SignupRequestDto;
 import afishaBMSTU.auth_service.dto.UserCreationRequestDto;
@@ -13,6 +14,7 @@ import afishaBMSTU.auth_service.model.User;
 import afishaBMSTU.auth_service.repository.RoleRepository;
 import afishaBMSTU.auth_service.repository.UserRepository;
 import afishaBMSTU.auth_service.security.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void register(SignupRequestDto signupRequestDto) {
+    public void register(SignupRequestDto signupRequestDto, HttpServletRequest request) {
 
         if (userRepository.existsByLogin(signupRequestDto.getLogin())) {
             log.error("Login is already using");
@@ -49,14 +51,16 @@ public class AuthServiceImpl implements AuthService {
         User user = userMapper.toUser(signupRequestDto);
 
         user.setPassword(passwordEncoder.encode(signupRequestDto.getPassword()));
-        Role role = roleRepository.findByUserRole(Roles.ROLE_ADMIN);
+        String requestSource = request.getHeader("X-Request-Source");
+        Role role = determineRole(requestSource);
         user.setRoles(Set.of(role));
 
-        UserCreationRequestDto userCreationRequestDto = userMapper.toUserCreationRequest(signupRequestDto);
-        userCreationRequestDto.setExternalId(user.getExternalId());
-        userServiceFeignClient.registerUser(userCreationRequestDto);
+        User savedUser = userRepository.save(user);
 
-        userRepository.save(user);
+        UserCreationRequestDto userCreationRequestDto = userMapper.toUserCreationRequest(signupRequestDto);
+        userCreationRequestDto.setExternalId(savedUser.getExternalId());
+        userServiceFeignClient.registerUser(userCreationRequestDto);
+        log.info("User successfully saved and sent to user service");
     }
 
     @Override
@@ -72,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
                 .map(role -> role.getUserRole().name())
                 .toList();
 
-        String token = jwtService.generateToken(user.getExternalId(), roles);
+        String token = jwtService.generateToken(new JwtTokenDataDto(user.getExternalId(), roles));
         log.info("Successfully authenticated and created token");
         return token;
     }
@@ -82,5 +86,14 @@ public class AuthServiceImpl implements AuthService {
             log.error("User with login not found");
             return new NotFoundException("User with login not found");
         });
+    }
+
+    private Role determineRole(String requestSource) {
+        if ("web".equalsIgnoreCase(requestSource)) {
+            return roleRepository.findByUserRole(Roles.ROLE_CREATOR);
+        } else if ("mobile".equalsIgnoreCase(requestSource)) {
+            return roleRepository.findByUserRole(Roles.ROLE_USER);
+        }
+        return roleRepository.findByUserRole(Roles.ROLE_USER);
     }
 }

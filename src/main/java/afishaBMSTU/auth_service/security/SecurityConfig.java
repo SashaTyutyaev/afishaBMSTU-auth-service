@@ -2,16 +2,19 @@ package afishaBMSTU.auth_service.security;
 
 import afishaBMSTU.auth_lib.security.BaseAuthTokenFilter;
 import afishaBMSTU.auth_lib.security.BaseSecurityConfig;
+import afishaBMSTU.auth_lib.security.internal.InternalTokenFilter;
+import afishaBMSTU.auth_lib.security.internal.InternalTokenService;
+import afishaBMSTU.auth_service.dto.JwtTokenDataDto;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
 
@@ -21,7 +24,7 @@ public class SecurityConfig extends BaseSecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(BaseAuthTokenFilter<?> authTokenFilter, CustomUserDetailsService customUserDetailsService) {
+    public SecurityConfig(BaseAuthTokenFilter<JwtTokenDataDto> authTokenFilter, CustomUserDetailsService customUserDetailsService) {
         super(authTokenFilter);
         this.customUserDetailsService = customUserDetailsService;
     }
@@ -39,13 +42,21 @@ public class SecurityConfig extends BaseSecurityConfig {
         return new ProviderManager(List.of(provider));
     }
 
+    @Bean
+    public InternalTokenService internalTokenService() {
+        return new InternalTokenService();
+    }
+
+    @Bean
+    public InternalTokenFilter internalTokenFilter() {
+        return new InternalTokenFilter(internalTokenService());
+    }
+
     @Override
     protected void configureHttpSecurity(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/sign-in").permitAll()
-                .requestMatchers("/api/auth/sign-up").permitAll()
-                .requestMatchers("/v3/api-docs").permitAll()
-        );
-
+        http.addFilterBefore(internalTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/sign-in", "api/auth/sign-up").permitAll()
+                );
     }
 }
