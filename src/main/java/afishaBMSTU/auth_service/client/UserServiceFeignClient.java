@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "user-service", url = "${integration.rest.user-service.url}")
+@FeignClient(name = "AFI-BMSTU-user-service")
 public interface UserServiceFeignClient {
 
     @PostMapping("/api/internal/create-user-after-sign-up")
