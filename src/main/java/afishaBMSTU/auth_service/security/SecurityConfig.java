@@ -24,7 +24,8 @@ public class SecurityConfig extends BaseSecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(BaseAuthTokenFilter<JwtTokenDataDto> authTokenFilter, CustomUserDetailsService customUserDetailsService) {
+    public SecurityConfig(BaseAuthTokenFilter<JwtTokenDataDto> authTokenFilter,
+                          CustomUserDetailsService customUserDetailsService) {
         super(authTokenFilter);
         this.customUserDetailsService = customUserDetailsService;
     }
@@ -57,6 +58,7 @@ public class SecurityConfig extends BaseSecurityConfig {
         http.addFilterBefore(internalTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/sign-in", "api/auth/sign-up").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                 );
     }
 }
