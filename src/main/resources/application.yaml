@@ -1,30 +1,6 @@
-server:
-  port: 8081
-
 spring:
-  application:
-    name: AFI-BMSTU-auth-service
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-        show_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_schema: auth_service
-  datasource:
-    driver-class-name: ${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/afisha-bmstu}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
-
-  liquibase:
-    enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-    default-schema: auth_service
-    liquibase-schema: auth_service
+  profiles:
+    active: local
 
 security:
   jwt:
@@ -37,12 +13,3 @@ integration:
     user-service:
       url: AFI-BMSTU-user-service
       token: YWhmaWZ1QUtFSVVKRmt3bGtkbHdvS1NV
-
-eureka:
-  client:
-    healthcheck:
-      enabled: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
