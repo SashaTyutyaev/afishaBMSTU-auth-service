@@ -1,6 +1,31 @@
 spring:
   profiles:
     active: local
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        acks: 1
+        spring:
+          json:
+            add:
+              type:
+                headers: false
+    consumer:
+      group-id: "user-delete-group"
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.UUIDDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+    listener:
+      ack-mode: manual
+
 
 security:
   jwt:
@@ -13,3 +38,7 @@ integration:
     user-service:
       url: AFI-BMSTU-user-service
       token: YWhmaWZ1QUtFSVVKRmt3bGtkbHdvS1NV
+  kafka:
+    topic:
+      user-creation: user-creation-topic
+      user-delete: user-delete-topic
