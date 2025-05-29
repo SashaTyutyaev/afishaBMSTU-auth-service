@@ -1,6 +1,5 @@
 package afishaBMSTU.auth_service.service;
 
-import afishaBMSTU.auth_service.client.UserServiceFeignClient;
 import afishaBMSTU.auth_service.dto.JwtTokenDataDto;
 import afishaBMSTU.auth_service.dto.LoginRequestDto;
 import afishaBMSTU.auth_service.dto.SignupRequestDto;
@@ -14,6 +13,7 @@ import afishaBMSTU.auth_service.model.User;
 import afishaBMSTU.auth_service.repository.RoleRepository;
 import afishaBMSTU.auth_service.repository.UserRepository;
 import afishaBMSTU.auth_service.security.JwtService;
+import afishaBMSTU.auth_service.sender.KafkaSender;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final UserServiceFeignClient userServiceFeignClient;
+    private final KafkaSender kafkaSender;
 
     @Override
     @Transactional
@@ -52,14 +52,14 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPassword(passwordEncoder.encode(signupRequestDto.getPassword()));
         String requestSource = request.getHeader("X-Request-Source");
-        Role role = determineRole(requestSource);
-        user.setRoles(Set.of(role));
+        Set<Role> roles = determineRole(requestSource);
+        user.setRoles(roles);
 
         User savedUser = userRepository.save(user);
 
         UserCreationRequestDto userCreationRequestDto = userMapper.toUserCreationRequest(signupRequestDto);
         userCreationRequestDto.setExternalId(savedUser.getExternalId());
-        userServiceFeignClient.registerUser(userCreationRequestDto);
+        kafkaSender.send(userCreationRequestDto);
         log.info("User successfully saved and sent to user service");
     }
 
@@ -88,12 +88,13 @@ public class AuthServiceImpl implements AuthService {
         });
     }
 
-    private Role determineRole(String requestSource) {
+    private Set<Role> determineRole(String requestSource) {
         if ("web".equalsIgnoreCase(requestSource)) {
-            return roleRepository.findByUserRole(Roles.ROLE_CREATOR);
+            return Set.of(roleRepository.findByUserRole(Roles.ROLE_ADMIN),
+                    roleRepository.findByUserRole(Roles.ROLE_CREATOR));
         } else if ("mobile".equalsIgnoreCase(requestSource)) {
-            return roleRepository.findByUserRole(Roles.ROLE_USER);
+            return Set.of(roleRepository.findByUserRole(Roles.ROLE_USER));
         }
-        return roleRepository.findByUserRole(Roles.ROLE_USER);
+        return Set.of(roleRepository.findByUserRole(Roles.ROLE_USER));
     }
 }
